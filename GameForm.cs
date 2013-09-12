@@ -159,8 +159,8 @@ namespace TetrisGame
                 SolidBrush br = new SolidBrush(colors[type]);
                 for (int i = 0; i < next.Length; i++)
                 {
-                    int x = next[i].X * w + nextPBox.Width / 2 - w;
-                    int y = next[i].Y * h + nextPBox.Height / 2;
+                    int x = next[i].X * w + 2 * w;
+                    int y = -next[i].Y * h + 2 * h;
                     e.Graphics.DrawRectangle(p, x, y, w, h);
                     e.Graphics.FillRectangle(br, x + 3, y + 3, w - 6, h - 6);
                 }

@@ -73,7 +73,8 @@ namespace TetrisGame
         /// </summary>
         public void Pause()
         {
-            gamePaused = !gamePaused;
+            if(!gameOver)
+                gamePaused = !gamePaused;
             OnUpdateOutput(EventArgs.Empty);
         }
 
@@ -113,6 +114,16 @@ namespace TetrisGame
                     return new Pieces.T_Piece();
                 case 1:
                     return new Pieces.O_Piece();
+                case 2:
+                    return new Pieces.I_Piece();
+                case 3:
+                    return new Pieces.J_Piece();
+                case 4:
+                    return new Pieces.L_Piece();
+                case 5:
+                    return new Pieces.S_Piece();
+                case 6:
+                    return new Pieces.Z_Piece();
                 default:
                     return new Pieces.T_Piece();
             }
