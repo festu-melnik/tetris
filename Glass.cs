@@ -6,6 +6,18 @@ using System.Threading.Tasks;
 
 namespace TetrisGame
 {
+    class LinesRemovedEventHadler
+    {
+        private int number;
+
+        public int NumberOfDeleteLines { get { return number; } }
+
+        public LinesRemovedEventHadler(int number)
+        {
+            this.number = number;
+        }
+    }
+
     class Glass
     {
         private const int minWidth = 10; // минимальное значение ширины
@@ -14,64 +26,80 @@ namespace TetrisGame
         private const int maxWidth = 25; // максимальное значение ширины
         private const int maxHeight = 50; // максимальное значение высоты
 
-        private bool[,] bricks; // в массиве указываются заполненные ячейки в стакане
+        // Стакан представляет собой двумерный массив из клеток. Число в массиве
+        // определяет состояние клетки: 0 - не заполнена, 1, 2,.. - заполнена.
+        // Числа, отличные от нуля задают тип клетки. В зависимости от типа, 
+        // клетки будут рисоваться по-разному.
+        private byte[,] bricks; // "стакан"
 
-        public int Width { get { return bricks.GetLength(1); } }
-        public int Height { get { return bricks.GetLength(0); } }
+        private readonly int width; // ширина "стакана"
+        private readonly int height; // высота "стакана
 
+        public event EventHandler<LinesRemovedEventHadler> LinesRemoved;
+
+        /// <summary>
+        /// Возвращает ширину "стакана" в клетках.
+        /// </summary>
+        public int Width { get { return width; } }
+
+        /// <summary>
+        /// Возвращает высоту "стакана" в клетках.
+        /// </summary>
+        public int Height { get { return height; } }
+
+        /// <summary>
+        /// Инициализирует новый экземпляр класса TetrisGame.Glass указанного размера.
+        /// </summary>
+        /// <param name="width">Ширина нового стакана.</param>
+        /// <param name="height">Высота нового стакана.</param>
         public Glass(int width, int height)
         {
             if (width < minWidth || width > maxWidth)
                 throw new ArgumentOutOfRangeException("width");
             if (height < minHeight || height > maxHeight)
                 throw new ArgumentOutOfRangeException("height");
-            this.bricks = new bool[height, width];
+            this.width = width;
+            this.height = height;
+            this.bricks = new byte[height, width];
         }
 
         /// <summary>
         /// Возвращает копию массива с информацией о заполненных ячейках "стакана".
         /// </summary>
         /// <returns>Массив, в котором указано, какие ячейки в "стакане" заполнены.</returns>
-        public bool[,] GetGlass()
+        public byte[,] GetGlass()
         {
-            return (bool[,])bricks.Clone();
+            return (byte[,])bricks.Clone();
         }
 
-        public bool PlaceBrick(int x, int y)
+        public void PlaceBrick(int x, int y, byte type)
         {
-            if (OutOfRange(x, y))
-                return false;
-            if (ThereIsBrick(x, y))
-                return false;
-            bricks[y, x] = true;
-            return true;
+            if(bricks[y, x] == 0)
+                bricks[y, x] = type;
         }
 
-        public bool RemoveBrick(int x, int y)
+        public void RemoveBrick(int x, int y)
         {
-            if (OutOfRange(x, y))
-                return false;
-            if (!ThereIsBrick(x, y))
-                return false;
-            bricks[y, x] = false;
-            return true;
+            if (bricks[y, x] != 0)
+                bricks[y, x] = 0;
         }
 
-        public bool ThereIsBrick(int x, int y)
+        public bool ThereBrick(int x, int y)
         {
-            if (OutOfRange(x, y))
+            if (x < bricks.GetLowerBound(1) || x > bricks.GetUpperBound(1))
                 return true;
-            if (bricks[y, x])
+            if (y < bricks.GetLowerBound(0) || y > bricks.GetUpperBound(0))
+                return true;
+            if (bricks[y, x] != 0)
                 return true;
             return false;
         }
 
-        private bool OutOfRange(int x, int y)
+        public bool ThereBrick(XY[] cArray)
         {
-            if (y < bricks.GetLowerBound(0) || y > bricks.GetUpperBound(0))
-                return true;
-            if (x < bricks.GetLowerBound(1) || x > bricks.GetUpperBound(1))
-                return true;
+            foreach (XY c in cArray)
+                if (ThereBrick(c.X, c.Y))
+                    return true;
             return false;
         }
 
@@ -86,7 +114,7 @@ namespace TetrisGame
                 throw new ArgumentOutOfRangeException("lineNumber");
             for (int j = bricks.GetLowerBound(1); j <= bricks.GetUpperBound(1); j++)
             {
-                if (bricks[lineNumber, j])
+                if (bricks[lineNumber, j] != 0)
                     return false;
             }
             return true;
@@ -103,7 +131,7 @@ namespace TetrisGame
                 throw new ArgumentOutOfRangeException("lineNumber");
             for (int j = bricks.GetLowerBound(1); j <= bricks.GetUpperBound(1); j++)
             {
-                if (!bricks[lineNumber, j])
+                if (bricks[lineNumber, j] == 0)
                     return false;
             }
             return true;
@@ -116,26 +144,26 @@ namespace TetrisGame
         {
             for (int i = bricks.GetLowerBound(0); i <= bricks.GetUpperBound(0); i++)
                 for (int j = bricks.GetLowerBound(1); j <= bricks.GetLowerBound(1); j++)
-                    if (bricks[i, j])
-                        bricks[i, j] = false;
+                    if (bricks[i, j] != 0)
+                        bricks[i, j] = 0;
         }
 
         /// <summary>
         /// Удаляет заполненные линии.
         /// </summary>
-        /// <returns>Количество удаленных линий.</returns>
-        public int RemoveCompleteLines()
+        public void RemoveCompleteLines()
         {
-            int count = 0;
+            int num = 0; // количество удаленных линий
             for (int i = bricks.GetUpperBound(0); i >= bricks.GetLowerBound(0); i--)
             {
                 if (this.LineIsComplete(i))
                 {
-                    count++;
+                    num++;
                     this.DeleteLine(i);
                 }
             }
-            return count;
+            if(num > 0)
+                OnLinesRemoved(new LinesRemovedEventHadler(num));
         }
 
         /// <summary>
@@ -153,6 +181,13 @@ namespace TetrisGame
                 if (this.LineIsBlank(i + 1))
                     break;
             }
+        }
+
+        private void OnLinesRemoved(LinesRemovedEventHadler e)
+        {
+            EventHandler<LinesRemovedEventHadler> handler = LinesRemoved;
+            if (handler != null)
+                handler(this, e);
         }
     }
 }

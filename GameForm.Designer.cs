@@ -38,9 +38,12 @@
             this.aboutToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.nextPBox = new System.Windows.Forms.PictureBox();
             this.statGBox = new System.Windows.Forms.GroupBox();
+            this.scoreL = new System.Windows.Forms.Label();
+            this.levelL = new System.Windows.Forms.Label();
             ((System.ComponentModel.ISupportInitialize)(this.gamePBox)).BeginInit();
             this.mainMenu.SuspendLayout();
             ((System.ComponentModel.ISupportInitialize)(this.nextPBox)).BeginInit();
+            this.statGBox.SuspendLayout();
             this.SuspendLayout();
             // 
             // gamePBox
@@ -86,12 +89,14 @@
             this.pauseToolStripMenuItem.Name = "pauseToolStripMenuItem";
             this.pauseToolStripMenuItem.Size = new System.Drawing.Size(158, 24);
             this.pauseToolStripMenuItem.Text = "Пауза";
+            this.pauseToolStripMenuItem.Click += new System.EventHandler(this.pauseToolStripMenuItem_Click);
             // 
             // exitToolStripMenuItem
             // 
             this.exitToolStripMenuItem.Name = "exitToolStripMenuItem";
             this.exitToolStripMenuItem.Size = new System.Drawing.Size(158, 24);
             this.exitToolStripMenuItem.Text = "Выход";
+            this.exitToolStripMenuItem.Click += new System.EventHandler(this.exitToolStripMenuItem_Click);
             // 
             // helpToolStripMenuItem
             // 
@@ -104,25 +109,49 @@
             // aboutToolStripMenuItem
             // 
             this.aboutToolStripMenuItem.Name = "aboutToolStripMenuItem";
-            this.aboutToolStripMenuItem.Size = new System.Drawing.Size(134, 24);
+            this.aboutToolStripMenuItem.Size = new System.Drawing.Size(152, 24);
             this.aboutToolStripMenuItem.Text = "Об игре";
+            this.aboutToolStripMenuItem.Click += new System.EventHandler(this.aboutToolStripMenuItem_Click);
             // 
             // nextPBox
             // 
+            this.nextPBox.BackColor = System.Drawing.Color.White;
             this.nextPBox.Location = new System.Drawing.Point(409, 57);
             this.nextPBox.Name = "nextPBox";
             this.nextPBox.Size = new System.Drawing.Size(100, 100);
             this.nextPBox.TabIndex = 2;
             this.nextPBox.TabStop = false;
+            this.nextPBox.Paint += new System.Windows.Forms.PaintEventHandler(this.nextPBox_Paint);
             // 
             // statGBox
             // 
+            this.statGBox.Controls.Add(this.levelL);
+            this.statGBox.Controls.Add(this.scoreL);
             this.statGBox.Location = new System.Drawing.Point(350, 239);
             this.statGBox.Name = "statGBox";
-            this.statGBox.Size = new System.Drawing.Size(200, 179);
+            this.statGBox.Size = new System.Drawing.Size(200, 126);
             this.statGBox.TabIndex = 3;
             this.statGBox.TabStop = false;
             this.statGBox.Text = "Статистика";
+            this.statGBox.Paint += new System.Windows.Forms.PaintEventHandler(this.statGBox_Paint);
+            // 
+            // scoreL
+            // 
+            this.scoreL.AutoSize = true;
+            this.scoreL.Location = new System.Drawing.Point(23, 42);
+            this.scoreL.Name = "scoreL";
+            this.scoreL.Size = new System.Drawing.Size(50, 17);
+            this.scoreL.TabIndex = 0;
+            this.scoreL.Text = "Очки: ";
+            // 
+            // levelL
+            // 
+            this.levelL.AutoSize = true;
+            this.levelL.Location = new System.Drawing.Point(23, 74);
+            this.levelL.Name = "levelL";
+            this.levelL.Size = new System.Drawing.Size(71, 17);
+            this.levelL.TabIndex = 0;
+            this.levelL.Text = "Уровень: ";
             // 
             // GameForm
             // 
@@ -142,6 +171,8 @@
             this.mainMenu.ResumeLayout(false);
             this.mainMenu.PerformLayout();
             ((System.ComponentModel.ISupportInitialize)(this.nextPBox)).EndInit();
+            this.statGBox.ResumeLayout(false);
+            this.statGBox.PerformLayout();
             this.ResumeLayout(false);
             this.PerformLayout();
 
@@ -159,6 +190,8 @@
         private System.Windows.Forms.ToolStripMenuItem aboutToolStripMenuItem;
         private System.Windows.Forms.PictureBox nextPBox;
         private System.Windows.Forms.GroupBox statGBox;
+        private System.Windows.Forms.Label levelL;
+        private System.Windows.Forms.Label scoreL;
     }
 }
 

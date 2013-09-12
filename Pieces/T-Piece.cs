@@ -4,19 +4,20 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace TetrisGame
+namespace TetrisGame.Pieces
 {
     class T_Piece : Piece
     {
-        public T_Piece(int start_x, int start_y)
+        public T_Piece()
         {
-            axis = new Coordinates(start_x, start_y);
-            form = new Coordinates[4];
-            form[0] = new Coordinates(0, 0);
-            form[1] = new Coordinates(0, 1);
-            form[2] = new Coordinates(1, 0);
-            form[3] = new Coordinates(-1, 0);
-            angle = new Angle(1);
+            form = new XY[4][]
+            {
+                new XY [4] {new XY(0, -1), new XY(1, 0), new XY(1 , -1), new XY(2, -1)},
+                new XY [4] {new XY(0, -1), new XY(1, 0), new XY(1 , -1), new XY(1, -2)},
+                new XY [4] {new XY(0, -1), new XY(1, -1), new XY(2 , -1), new XY(1, -2)},
+                new XY [4] {new XY(1, 0), new XY(1, -1), new XY(2 , -1), new XY(1, -2)},
+            };
+            type = 2;
         }
     }
 }

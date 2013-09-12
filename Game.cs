@@ -11,11 +11,24 @@ namespace TetrisGame
         private Thread thread; // поток для игры
         private Level level; // уровень игры, определяет скорость падения фигурок
         private Glass glass; // "стакан", в который падают фигурки
-        private uint score; // заработанные очки
+        private int score; // заработанные очки
         private bool gameOver; // флаг завершения игры
+        private bool gamePaused; // флаг приостановки игры
         private Piece fallingPiece; // падающая фигурка
+        private Piece nextPiece; // следующая фигурка
+        private XY defPosition; // позиция фигурки по-умолчанию
 
         public event EventHandler UpdateOutput; //
+
+        public bool GameOver { get { return gameOver; } }
+
+        public bool Paused { get { return gamePaused; } }
+
+        public int Score { get { return score; } }
+        public int Level { get { return level.CurrentLevel; } }
+
+        public byte NextType { get { return nextPiece.Type; } }
+        public XY[] NextPosition { get { return nextPiece.GetPosition(); } }
 
         public Game()
         {
@@ -23,53 +36,86 @@ namespace TetrisGame
             thread.IsBackground = true;
             level = new Level(1, 10);
             glass = new Glass(10, 20);
-            score = 0;
+            glass.LinesRemoved += glass_LinesRemoved;
+            defPosition = new XY(4, 19);
             gameOver = false;
         }
 
-        public void Action()
+        private void glass_LinesRemoved(object sender, LinesRemovedEventHadler e)
         {
-            this.NewPiece();
-            this.OnUpdateOutput(EventArgs.Empty);
+            score += e.NumberOfDeleteLines * 100 * level.CurrentLevel;
+            if (score > 1000 * level.CurrentLevel * level.CurrentLevel)
+                level.LevelUp();
+        }
+
+        private void Action()
+        {
+            NewPiece();
             Thread.Sleep(1000 / level.CurrentLevel);
             while (!gameOver)
             {
-                this.MovePieceDown();
+                if(!gamePaused)
+                    MovePieceDown();
                 Thread.Sleep(1000 / level.CurrentLevel);
             }
         }
 
         /// <summary>
-        /// Запускает игру.
+        /// Создает и запускает новую игру.
         /// </summary>
-        public void Start()
+        public void NewGame()
         {
             thread.Start();
         }
 
         /// <summary>
-        /// Завершает игру.
+        /// Останавливает или возобновляет игру.
         /// </summary>
-        public void Stop()
+        public void Pause()
         {
-
+            gamePaused = !gamePaused;
+            OnUpdateOutput(EventArgs.Empty);
         }
 
-        public bool[,] GetGlassSnapshot()
+        /// <summary>
+        /// Возвращает слепок состояния игрового стакана.
+        /// </summary>
+        /// <returns>Двумерный массив целочисленных значений.</returns>
+        public byte[,] GetGlassSnapshot()
         {
             return glass.GetGlass();
         }
 
+        /// <summary>
+        /// Создает новую фигурку в игровом стакане.
+        /// </summary>
         private void NewPiece()
         {
-            fallingPiece = new T_Piece(glass.Width / 2, glass.Height - 2);
-            if (Collision())
-            {
+            if (nextPiece == null)
+                nextPiece = RandomPiece();
+            fallingPiece = nextPiece;
+            nextPiece = RandomPiece();
+            if (!fallingPiece.PlaceToGlass(glass, defPosition))
                 gameOver = true;
-                fallingPiece = null;
+            OnUpdateOutput(EventArgs.Empty);
+        }
+
+        /// <summary>
+        /// Возвращает случайную фигурку.
+        /// </summary>
+        /// <returns>Объект класса Piece.</returns>
+        private Piece RandomPiece()
+        {
+            Random rnd = new Random();
+            switch (rnd.Next(7))
+            {
+                case 0:
+                    return new Pieces.T_Piece();
+                case 1:
+                    return new Pieces.O_Piece();
+                default:
+                    return new Pieces.T_Piece();
             }
-            else
-                fallingPiece.PlaceToGlass(glass);
         }
 
         /// <summary>
@@ -85,71 +131,42 @@ namespace TetrisGame
             }
         }
 
-        private bool Collision()
-        {
-            foreach (Coordinates c in fallingPiece.GetLocation())
-            {
-                if (glass.ThereIsBrick(c.X, c.Y))
-                    return true;
-            }
-            return false;
-        }
-
         public void MovePieceDown()
         {
-            if (!gameOver)
+            if (!gameOver && !gamePaused)
             {
-                fallingPiece.RemoveFromGlass(glass);
-                fallingPiece.MoveDown();
-                if (Collision())
+                if (!fallingPiece.Offset(0, -1))
                 {
-                    fallingPiece.MoveUp();
-                    fallingPiece.PlaceToGlass(glass);
-                    this.NewPiece();
-                    score += (uint)(100 * level.CurrentLevel * glass.RemoveCompleteLines());
-                    if (score > level.CurrentLevel * 1000)
-                        level.LevelUp();
+                    glass.RemoveCompleteLines();
+                    NewPiece();
                 }
-                fallingPiece.PlaceToGlass(glass);
                 this.OnUpdateOutput(EventArgs.Empty);
             }
         }
 
         public void MovePieceRight()
         {
-            if (!gameOver)
+            if (!gameOver && !gamePaused)
             {
-                fallingPiece.RemoveFromGlass(glass);
-                fallingPiece.MoveRight();
-                if (Collision())
-                    fallingPiece.MoveLeft();
-                fallingPiece.PlaceToGlass(glass);
+                fallingPiece.Offset(1, 0);
                 this.OnUpdateOutput(EventArgs.Empty);
             }
         }
 
         public void MovePieceLeft()
         {
-            if (!gameOver)
+            if (!gameOver && !gamePaused)
             {
-                fallingPiece.RemoveFromGlass(glass);
-                fallingPiece.MoveLeft();
-                if (Collision())
-                    fallingPiece.MoveRight();
-                fallingPiece.PlaceToGlass(glass);
+                fallingPiece.Offset(-1, 0);
                 this.OnUpdateOutput(EventArgs.Empty);
             }
         }
 
         public void RotatePiece()
         {
-            if (!gameOver)
+            if (!gameOver && !gamePaused)
             {
-                fallingPiece.RemoveFromGlass(glass);
-                fallingPiece.RotateLeft();
-                if (Collision())
-                    fallingPiece.RotateRight();
-                fallingPiece.PlaceToGlass(glass);
+                fallingPiece.Rotate();
                 this.OnUpdateOutput(EventArgs.Empty);
             }
         }

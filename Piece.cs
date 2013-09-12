@@ -8,106 +8,105 @@ namespace TetrisGame
 {
     abstract class Piece
     {
-        // каждая фигурка состоит из нескольких частей
-        // поворот фигурки осуществляется с помощью матрицы поворота
-        protected Coordinates axis; // координаты центральной точки фигурки в "стакане"
-        protected Coordinates[] form; // относительные координаты частей фигурки
-        protected Angle angle; // угол поворота
+        protected Glass glass; // "стакан", в котором находится фигурка
+        protected XY location; // координаты левого верхнего угла фигурки в "стакане"
+        protected byte type; // тип фигурки
+
+        protected XY[][] form; // массив содержит все возможные формы одной фигуры
+
+        public byte Type { get { return type; } }
+
+        public bool PlaceToGlass(Glass glass, XY location)
+        {
+            if (this.glass != null)
+                Hide();
+            this.glass = glass;
+            this.location = location;
+            if(glass.ThereBrick(GetPosition()))
+                return false;
+            Show();
+            return true;
+        }
 
         /// <summary>
         /// Возвращает массив координат всех частей фигурки.
         /// </summary>
         /// <returns>Массив с координатами.</returns>
-        public Coordinates[] GetLocation()
+        public XY[] GetPosition()
         {
-            Coordinates[] location = new Coordinates[form.Length];
-            for (int i = 0; i < location.Length; i++)
-                location[i] = new Coordinates(axis.X + form[i].X, axis.Y + form[i].Y);
-            return location;
+            XY[] position = new XY[form[0].Length];
+            for (int i = 0; i < position.Length; i++)
+                position[i] = new XY(location.X + form[0][i].X, location.Y + form[0][i].Y);
+            return position;
         }
 
         /// <summary>
-        /// Сдвигает фигурку на единицу вправо.
+        /// Сдвигает фигурку по оям на указанную величину.
         /// </summary>
-        public void MoveRight()
+        /// <param name="dX">Смещение по горизонтальной оси.</param>
+        /// <param name="dY">Смещение по вертикальной оси.</param>
+        /// <returns></returns>
+        public bool Offset(int dX, int dY)
         {
-            axis = new Coordinates(axis.X + 1, axis.Y);
-        }
-
-        /// <summary>
-        /// Сдвигает фигурку на единицу влево.
-        /// </summary>
-        public void MoveLeft()
-        {
-            axis = new Coordinates(axis.X - 1, axis.Y);
-        }
-
-        /// <summary>
-        /// Сдвигает фигурку на единицу вверх.
-        /// </summary>
-        public void MoveUp()
-        {
-            axis = new Coordinates(axis.X, axis.Y + 1);
-        }
-
-        /// <summary>
-        /// Сдвигает фигурку на единицу вниз.
-        /// </summary>
-        public void MoveDown()
-        {
-            axis = new Coordinates(axis.X, axis.Y - 1);
-        }
-
-        /// <summary>
-        /// Вращает фигурку по часовой стрелке.
-        /// </summary>
-        public virtual void RotateRight()
-        {
-            for (int i = 1; i < form.Length; i++)
+            XY[] testPos = new XY[form[0].Length];
+            for (int i = 0; i < testPos.Length; i++)
+                testPos[i] = new XY(location.X + dX + form[0][i].X, location.Y + dY + form[0][i].Y);
+            Hide();
+            if (!glass.ThereBrick(testPos))
             {
-                int oldX = form[i].X;
-                int oldY = form[i].Y;
-                int newX = form[i].X * angle.Cos() + form[i].Y * angle.Sin();
-                int newY = -form[i].X * angle.Sin() + form[i].Y * angle.Cos();
-                form[i] = new Coordinates(newY, newX);
+                location = new XY(location.X + dX, location.Y + dY);
+                Show();
+                return true;
             }
+            Show();
+            return false;
         }
 
         /// <summary>
-        /// Вращает фигурку против часовой стрелки.
+        /// Вращает фигурку.
         /// </summary>
-        public virtual void RotateLeft()
+        public bool Rotate()
         {
-            for (int i = 1; i < form.Length; i++)
+            if (form.Length > 1)
             {
-                int oldX = form[i].X;
-                int oldY = form[i].Y;
-                int newX = form[i].X * angle.Cos() - form[i].Y * angle.Sin();
-                int newY = form[i].X * angle.Sin() + form[i].Y * angle.Cos();
-                form[i] = new Coordinates(newX, newY);
+                XY[] testPos = new XY[form[1].Length];
+                for (int i = 0; i < testPos.Length; i++)
+                    testPos[i] = new XY(location.X + form[1][i].X, location.Y + form[1][i].Y);
+                Hide();
+                if (!glass.ThereBrick(testPos))
+                {
+                    for (int i = 1; i < form.Length; i++)
+                    {
+                        XY[] tmp = form[i - 1];
+                        form[i - 1] = form[i];
+                        form[i] = tmp;
+                    }
+                    Show();
+                    return true;
+                }
+                Show();
             }
+            return false;
         }
 
         /// <summary>
-        /// Удаляет фигурку из указанного стакана.
+        /// Удаляет фигурку из стакана.
         /// </summary>
-        /// <param name="glass">Ссылка на экземпляр класса Glass.</param>
-        public void RemoveFromGlass(Glass glass)
+        protected void Hide()
         {
-            Coordinates[] pieceLocation = this.GetLocation();
-            foreach (Coordinates c in pieceLocation)
+            XY[] pieceLocation = this.GetPosition();
+            foreach (XY c in pieceLocation)
                 glass.RemoveBrick(c.X, c.Y);
         }
 
         /// <summary>
-        /// Помещает фигурку в указанный стакан.
+        /// Помещает фигурку в стакан.
         /// </summary>
-        /// <param name="glass">Ссылка на экземпляр класса Glass.</param>
-        public void PlaceToGlass(Glass glass)
+        protected void Show()
         {
-            Coordinates[] pieceLocation = this.GetLocation();
-            foreach (Coordinates c in pieceLocation)
-                glass.PlaceBrick(c.X, c.Y);
+            XY[] pieceLocation = this.GetPosition();
+            foreach (XY c in pieceLocation)
+                glass.PlaceBrick(c.X, c.Y, type);
         }
     }
 }
