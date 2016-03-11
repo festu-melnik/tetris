@@ -4,7 +4,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace TetrisGame.Pieces
+namespace Tetris.Pieces
 {
     class O_Piece : Piece
     {
